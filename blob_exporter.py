@@ -43,10 +43,7 @@ def generate_csv():
     timestr = time.strftime("%Y_%m_%d_%H_%M_%S")
     try:
         df=pd.concat(panda_frames_lst, ignore_index=True)
-        # Remove the column 'eventType'
-        if 'eventType()' in df.columns:
-            df.drop(columns=['eventType()'], inplace=True)
-
+        
         x = list(divide_chunks(df,records_per_csv))
         for idx,i in enumerate(x):
             filename="exported_data_"+timestr+"_"+str(idx)+".csv"
@@ -91,13 +88,12 @@ async def query_blob_total(session, offset, headers):
 
 async def query_records():
     offset = 0  # Initial offset
-    limit = 20  # Number of records to fetch per request
     tasks = []
     async with aiohttp.ClientSession() as session:
         while True:
             if len(tasks) < num_concurrent_requests:
                 tasks.append(query_blob_total(session, offset, headers))
-                offset += limit  # Increment the offset to get the next page of results
+                offset += LIMIT  # Increment the offset to get the next page of results
             if len(tasks) == num_concurrent_requests or offset >= 1000:  # Adjust the condition as needed
                 logging.info("Continuing to obtain data from New Relic API, please wait...")
                 responses = await asyncio.gather(*tasks)
